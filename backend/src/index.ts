@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import { backtestRoutes } from './routes/backtests.js'
 import { strategyRoutes } from './routes/strategies.js'
+import { getDataSummary } from './db/validation.js'
 
 dotenv.config()
 
@@ -12,8 +13,9 @@ const PORT = parseInt(process.env.PORT ?? '3001', 10)
 app.use(cors())
 app.use(express.json())
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+app.get('/api/health', async (_req, res) => {
+  const data = await getDataSummary()
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), data })
 })
 
 app.use('/api/backtests', backtestRoutes)

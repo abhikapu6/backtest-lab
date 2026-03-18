@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Candle {
+  id     Int      @id @default(autoincrement())
+  symbol String   @db.VarChar(10)
+  date   DateTime @db.Date
+  open   Float
+  high   Float
+  low    Float
+  close  Float
+  volume BigInt
+
+  @@unique([symbol, date])
+  @@index([symbol])
+  @@map("candles")
+}
+
+model Backtest {
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now()) @map("created_at")
+  strategy       String   @db.VarChar(50)
+  symbols        String[]
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
+  params         Json
+  costModel      Json     @map("cost_model")
+  initialCapital Float    @map("initial_capital")
+  status         String   @default("completed") @db.VarChar(20)
+
+  metrics BacktestMetrics?
+  equity  BacktestEquity[]
+  trades  BacktestTrade[]
+
+  @@map("backtests")
+}
+
+model BacktestMetrics {
+  id           Int    @id @default(autoincrement())
+  backtestId   String @unique @map("backtest_id")
+  totalReturn  Float  @map("total_return")
+  cagr         Float
+  sharpe       Float
+  volatility   Float
+  maxDrawdown  Float  @map("max_drawdown")
+  winRate      Float  @map("win_rate")
+  profitFactor Float  @map("profit_factor")
+  numTrades    Int    @map("num_trades")
+
+  backtest Backtest @relation(fields: [backtestId], references: [id], onDelete: Cascade)
+
+  @@map("backtest_metrics")
+}
+
+model BacktestEquity {
+  id         Int      @id @default(autoincrement())
+  backtestId String   @map("backtest_id")
+  date       DateTime @db.Date
+  equity     Float
+  drawdown   Float
+
+  backtest Backtest @relation(fields: [backtestId], references: [id], onDelete: Cascade)
+
+  @@index([backtestId])
+  @@map("backtest_equity")
+}
+
+model BacktestTrade {
+  id         Int      @id @default(autoincrement())
+  backtestId String   @map("backtest_id")
+  symbol     String   @db.VarChar(10)
+  entryDate  DateTime @map("entry_date") @db.Date
+  exitDate   DateTime @map("exit_date") @db.Date
+  entryPrice Float    @map("entry_price")
+  exitPrice  Float    @map("exit_price")
+  pnl        Float
+  returnPct  Float    @map("return_pct")
+
+  backtest Backtest @relation(fields: [backtestId], references: [id], onDelete: Cascade)
+
+  @@index([backtestId])
+  @@map("backtest_trades")
+}
