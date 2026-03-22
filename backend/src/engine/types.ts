@@ -76,3 +76,22 @@ export interface BacktestResult {
   dailyReturns: DailyReturn[]
   finalEquity: number
 }
+
+export interface ParamDescriptor {
+  name: string
+  label: string
+  description: string
+  type: 'int' | 'float'
+  min: number
+  max: number
+  step: number
+  default: number
+}
+
+export interface StrategyRegistryEntry {
+  id: string
+  name: string
+  description: string
+  params: ParamDescriptor[]
+  fn: StrategyFn
+}

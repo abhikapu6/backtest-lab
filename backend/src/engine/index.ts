@@ -6,9 +6,11 @@ export type {
   Bar, Signal, StrategyFn, StrategyConfig, CostModelConfig,
   Position, Trade, EquityPoint, DailyReturn,
   BacktestConfig, BacktestResult,
+  ParamDescriptor, StrategyRegistryEntry,
 } from './types.js'
 export { simulate } from './simulator.js'
 export { buyExecutionPrice, sellExecutionPrice, tradeCommission } from './cost-model.js'
+export { getStrategy, getAllStrategies } from './strategies/index.js'
 
 export async function loadCandles(
   symbols: string[],
