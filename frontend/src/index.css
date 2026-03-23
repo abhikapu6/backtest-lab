@@ -107,6 +107,12 @@ code {
   font-size: var(--text-sm);
 }
 
+/* Skeleton animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
