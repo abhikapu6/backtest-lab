@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Button, Card, Input, Select, Toggle } from '../components/index.js'
+
+export interface CloneState {
+  symbols: string[]
+  startDate: string
+  endDate: string
+  strategyId: string
+  params: Record<string, number>
+  costEnabled: boolean
+  commission: string
+  slippage: string
+  initialCapital: string
+}
 
 const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA']
 
@@ -48,8 +60,10 @@ const initialForm: FormState = {
 
 export function NewBacktest() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const cloned = location.state as CloneState | null
   const [strategies, setStrategies] = useState<StrategyInfo[]>([])
-  const [form, setForm] = useState<FormState>(initialForm)
+  const [form, setForm] = useState<FormState>(cloned ?? initialForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -60,7 +74,8 @@ export function NewBacktest() {
       .then((data) => {
         const list: StrategyInfo[] = data.strategies
         setStrategies(list)
-        if (list.length > 0) {
+        // Only seed defaults when NOT cloning (cloned state already has strategyId + params)
+        if (!cloned && list.length > 0) {
           const first = list[0]
           setForm((f) => ({
             ...f,
@@ -70,7 +85,7 @@ export function NewBacktest() {
         }
       })
       .catch(() => setSubmitError('Failed to load strategies'))
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedStrategy = strategies.find((s) => s.id === form.strategyId)
 
