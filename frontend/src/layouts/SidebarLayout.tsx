@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import type { CSSProperties } from 'react'
+import { ErrorBoundary } from '../components/index.js'
 
 const navItems = [
   { to: '/backtest/new', label: 'Run Backtest', icon: PlayIcon },
@@ -41,7 +42,9 @@ export function SidebarLayout() {
       </aside>
 
       <main style={mainStyle}>
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   )

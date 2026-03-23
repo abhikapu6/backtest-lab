@@ -1,5 +1,6 @@
 export { Button } from './Button.js'
 export { Card } from './Card.js'
+export { ErrorBoundary } from './ErrorBoundary.js'
 export { Input } from './Input.js'
 export { KpiCard } from './KpiCard.js'
 export { Select } from './Select.js'
