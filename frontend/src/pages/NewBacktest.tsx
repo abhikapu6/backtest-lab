@@ -11,10 +11,23 @@ export interface CloneState {
   costEnabled: boolean
   commission: string
   slippage: string
+  stopLossEnabled: boolean
+  stopLoss: string
   initialCapital: string
 }
 
-const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA']
+const SYMBOLS: { ticker: string; label: string; group: string }[] = [
+  { ticker: 'SPY',  label: 'SPY – S&P 500',       group: 'ETFs' },
+  { ticker: 'QQQ',  label: 'QQQ – Nasdaq 100',     group: 'ETFs' },
+  { ticker: 'IWM',  label: 'IWM – Russell 2000',   group: 'ETFs' },
+  { ticker: 'GLD',  label: 'GLD – Gold',            group: 'ETFs' },
+  { ticker: 'TLT',  label: 'TLT – 20yr Treasuries', group: 'ETFs' },
+  { ticker: 'AAPL', label: 'AAPL – Apple',          group: 'Equities' },
+  { ticker: 'MSFT', label: 'MSFT – Microsoft',      group: 'Equities' },
+  { ticker: 'NVDA', label: 'NVDA – NVIDIA',         group: 'Equities' },
+  { ticker: 'AMZN', label: 'AMZN – Amazon',         group: 'Equities' },
+  { ticker: 'TSLA', label: 'TSLA – Tesla',          group: 'Equities' },
+]
 
 interface ParamDescriptor {
   name: string
@@ -43,6 +56,8 @@ interface FormState {
   costEnabled: boolean
   commission: string
   slippage: string
+  stopLossEnabled: boolean
+  stopLoss: string
   initialCapital: string
 }
 
@@ -55,6 +70,8 @@ const initialForm: FormState = {
   costEnabled: false,
   commission: '1.00',
   slippage: '5',
+  stopLossEnabled: false,
+  stopLoss: '5',
   initialCapital: '10000',
 }
 
@@ -144,6 +161,11 @@ export function NewBacktest() {
       if (isNaN(slip) || slip < 0 || slip > 500) errs.slippage = '0 – 500'
     }
 
+    if (form.stopLossEnabled) {
+      const sl = parseFloat(form.stopLoss)
+      if (isNaN(sl) || sl <= 0 || sl > 50) errs.stopLoss = '0.1 – 50'
+    }
+
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -165,6 +187,7 @@ export function NewBacktest() {
           enabled: form.costEnabled,
           commissionPerTrade: parseFloat(form.commission) || 0,
           slippageBps: parseFloat(form.slippage) || 0,
+          stopLossPercent: form.stopLossEnabled ? parseFloat(form.stopLoss) || 0 : 0,
         },
         initialCapital: parseFloat(form.initialCapital),
       }
@@ -197,32 +220,39 @@ export function NewBacktest() {
         {/* ── Symbols ──────────────────────────────────────────── */}
         <Card>
           <SectionLabel>Asset Universe</SectionLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-            {SYMBOLS.map((s) => {
-              const active = form.symbols.includes(s)
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleSymbol(s)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    border: `1.5px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                    background: active ? 'var(--color-primary-ghost)' : 'var(--color-bg-surface)',
-                    color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                    fontWeight: active ? 600 : 400,
-                    fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--font-mono)',
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                >
-                  {s}
-                </button>
-              )
-            })}
-          </div>
+          {(['ETFs', 'Equities'] as const).map((group) => (
+            <div key={group} style={{ marginTop: 'var(--space-3)' }}>
+              <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{group}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                {SYMBOLS.filter(s => s.group === group).map(({ ticker, label }) => {
+                  const active = form.symbols.includes(ticker)
+                  return (
+                    <button
+                      key={ticker}
+                      type="button"
+                      onClick={() => toggleSymbol(ticker)}
+                      title={label}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 'var(--radius-md)',
+                        border: `1.5px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        background: active ? 'var(--color-primary-ghost)' : 'var(--color-bg-surface)',
+                        color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                        fontWeight: active ? 600 : 400,
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-mono)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {ticker}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
           {errors.symbols && <ErrorHint>{errors.symbols}</ErrorHint>}
         </Card>
 
@@ -342,6 +372,40 @@ export function NewBacktest() {
                   setErrors((er) => ({ ...er, slippage: '' }))
                 }}
                 error={errors.slippage}
+              />
+            </div>
+          )}
+        </Card>
+
+        {/* ── Stop-Loss ────────────────────────────────────────── */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <SectionLabel>Stop-Loss</SectionLabel>
+              <p style={{ margin: 'var(--space-1) 0 0', fontSize: 'var(--text-xs)', color: 'var(--color-text-dim)' }}>
+                Exit a position intrabar when price drops this % below entry
+              </p>
+            </div>
+            <Toggle
+              checked={form.stopLossEnabled}
+              onChange={(v) => setForm((f) => ({ ...f, stopLossEnabled: v }))}
+            />
+          </div>
+
+          {form.stopLossEnabled && (
+            <div style={{ marginTop: 'var(--space-4)', maxWidth: 200 }}>
+              <Input
+                label="Stop-Loss (%)"
+                type="number"
+                min={0.1}
+                max={50}
+                step={0.5}
+                value={form.stopLoss}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, stopLoss: e.target.value }))
+                  setErrors((er) => ({ ...er, stopLoss: '' }))
+                }}
+                error={errors.stopLoss}
               />
             </div>
           )}

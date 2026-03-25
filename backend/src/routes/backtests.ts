@@ -21,6 +21,7 @@ interface RunBacktestBody {
     enabled?: boolean
     commissionPerTrade?: number
     slippageBps?: number
+    stopLossPercent?: number
   }
   initialCapital?: number
 }
@@ -227,6 +228,11 @@ async function validateRunRequest(body: RunBacktestBody): Promise<string[]> {
         errors.push('slippageBps must be a number between 0 and 500')
       }
     }
+    if (cm.stopLossPercent !== undefined) {
+      if (typeof cm.stopLossPercent !== 'number' || cm.stopLossPercent < 0 || cm.stopLossPercent > 50) {
+        errors.push('stopLossPercent must be a number between 0 and 50')
+      }
+    }
   }
 
   // Initial capital
@@ -257,6 +263,7 @@ function buildConfig(body: RunBacktestBody): BacktestConfig {
       enabled: body.costModel?.enabled ?? false,
       commissionPerTrade: body.costModel?.commissionPerTrade ?? 0,
       slippageBps: body.costModel?.slippageBps ?? 0,
+      stopLossPercent: body.costModel?.stopLossPercent ?? 0,
     },
     initialCapital: body.initialCapital ?? 10_000,
   }

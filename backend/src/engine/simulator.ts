@@ -62,6 +62,23 @@ export function simulate(
       }
     }
 
+    // Phase 1.5: intrabar stop-loss check
+    const stopLossPct = costModel.stopLossPercent ?? 0
+    if (stopLossPct > 0) {
+      for (const symbol of symbols) {
+        const position = positions.get(symbol)
+        if (!position) continue
+        const bar = barLookup.get(symbol)!.get(dateKey)!
+        const stopPrice = position.entryPrice * (1 - stopLossPct / 100)
+        if (bar.low <= stopPrice) {
+          // Normal stop: fill at stopPrice. Gap-down: market already below stop → fill at open.
+          const fillPrice = Math.min(bar.open, stopPrice)
+          executeSell(symbol, bar.date, fillPrice, costModel, allocations, positions, trades)
+          signals.set(symbol, 'flat')
+        }
+      }
+    }
+
     // Phase 2: mark-to-market at close
     let equity = 0
     for (const symbol of symbols) {

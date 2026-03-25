@@ -56,9 +56,12 @@ interface Trade {
 // ── Helpers ──────────────────────────────────────────────────────────
 
 const STRATEGY_NAMES: Record<string, string> = {
-  'sma-crossover': 'SMA Crossover',
+  'sma-crossover':      'SMA Crossover',
+  'ema-crossover':      'EMA Crossover',
+  'macd-crossover':     'MACD Crossover',
   'rsi-mean-reversion': 'RSI Mean Reversion',
-  'bollinger-bands': 'Bollinger Bands',
+  'bollinger-bands':    'Bollinger Bands',
+  'donchian-channel':   'Donchian Channel',
 }
 
 function pct(v: number, decimals = 2) {

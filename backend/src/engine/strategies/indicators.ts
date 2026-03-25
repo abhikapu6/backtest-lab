@@ -1,3 +1,54 @@
+/**
+ * Exponential moving average over the full series, seeded with the first value.
+ * Returns null when values.length < period.
+ */
+export function ema(values: number[], period: number): number | null {
+  if (values.length < period) return null
+  const k = 2 / (period + 1)
+  let result = values[0]
+  for (let i = 1; i < values.length; i++) {
+    result = values[i] * k + result * (1 - k)
+  }
+  return result
+}
+
+/**
+ * MACD: returns the current MACD line and signal line values.
+ * Returns null when there are insufficient bars to warm up both the slow EMA
+ * and the signal EMA.
+ */
+export function macd(
+  closes: number[],
+  fastPeriod: number,
+  slowPeriod: number,
+  signalPeriod: number,
+): { macdLine: number; signalLine: number } | null {
+  if (closes.length < slowPeriod + signalPeriod) return null
+
+  const kFast = 2 / (fastPeriod + 1)
+  const kSlow = 2 / (slowPeriod + 1)
+  const kSig  = 2 / (signalPeriod + 1)
+
+  let fastEma = closes[0]
+  let slowEma = closes[0]
+  const macdValues: number[] = []
+
+  for (let i = 1; i < closes.length; i++) {
+    fastEma = closes[i] * kFast + fastEma * (1 - kFast)
+    slowEma = closes[i] * kSlow + slowEma * (1 - kSlow)
+    if (i >= slowPeriod - 1) macdValues.push(fastEma - slowEma)
+  }
+
+  if (macdValues.length < signalPeriod) return null
+
+  let signalEma = macdValues[0]
+  for (let i = 1; i < macdValues.length; i++) {
+    signalEma = macdValues[i] * kSig + signalEma * (1 - kSig)
+  }
+
+  return { macdLine: macdValues[macdValues.length - 1], signalLine: signalEma }
+}
+
 /** Simple moving average of the last `window` values. */
 export function sma(values: number[], window: number): number | null {
   if (values.length < window) return null

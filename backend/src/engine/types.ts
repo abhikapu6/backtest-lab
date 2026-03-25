@@ -30,6 +30,8 @@ export interface CostModelConfig {
   enabled: boolean
   commissionPerTrade: number
   slippageBps: number
+  /** Percentage drop from entry price that triggers a stop-loss exit. 0 = disabled. */
+  stopLossPercent?: number
 }
 
 export interface Position {

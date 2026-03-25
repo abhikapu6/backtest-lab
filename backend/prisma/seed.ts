@@ -10,7 +10,7 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
-const SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA']
+const SYMBOLS = ['SPY', 'QQQ', 'IWM', 'GLD', 'TLT', 'AAPL', 'MSFT', 'NVDA', 'AMZN', 'TSLA']
 const START_DATE = '2015-01-01'
 const END_DATE = '2025-12-31'
 

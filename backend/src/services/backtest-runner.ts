@@ -26,6 +26,7 @@ export async function executeAndPersist(config: BacktestConfig): Promise<string>
           enabled: config.costModel.enabled,
           commissionPerTrade: config.costModel.commissionPerTrade,
           slippageBps: config.costModel.slippageBps,
+          stopLossPercent: config.costModel.stopLossPercent ?? 0,
         },
         initialCapital: config.initialCapital,
         status: 'completed',

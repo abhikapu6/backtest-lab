@@ -1,6 +1,13 @@
 import { prisma } from './client.js'
 
-export const ALLOWED_SYMBOLS = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'TSLA'] as const
+export const ALLOWED_SYMBOLS = [
+  // Broad-market ETFs
+  'SPY', 'QQQ', 'IWM',
+  // Sector / commodity ETFs
+  'GLD', 'TLT',
+  // Large-cap equities
+  'AAPL', 'MSFT', 'NVDA', 'AMZN', 'TSLA',
+] as const
 export type AllowedSymbol = (typeof ALLOWED_SYMBOLS)[number]
 
 export function isAllowedSymbol(symbol: string): symbol is AllowedSymbol {

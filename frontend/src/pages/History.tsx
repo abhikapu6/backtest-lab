@@ -15,7 +15,7 @@ interface BacktestSummary {
   initialCapital: number
   status: string
   params: Record<string, number>
-  costModel: { enabled: boolean; commissionPerTrade: number; slippageBps: number }
+  costModel: { enabled: boolean; commissionPerTrade: number; slippageBps: number; stopLossPercent?: number }
   metrics: {
     totalReturn: number
     cagr: number
@@ -35,9 +35,12 @@ interface Pagination {
 // ── Helpers ──────────────────────────────────────────────────────────
 
 const STRATEGY_NAMES: Record<string, string> = {
-  'sma-crossover': 'SMA Crossover',
+  'sma-crossover':      'SMA Crossover',
+  'ema-crossover':      'EMA Crossover',
+  'macd-crossover':     'MACD Crossover',
   'rsi-mean-reversion': 'RSI Mean Reversion',
-  'bollinger-bands': 'Bollinger Bands',
+  'bollinger-bands':    'Bollinger Bands',
+  'donchian-channel':   'Donchian Channel',
 }
 
 function pct(v: number) {
@@ -85,6 +88,8 @@ export function History() {
       costEnabled: bt.costModel?.enabled ?? false,
       commission: String(bt.costModel?.commissionPerTrade ?? 1),
       slippage: String(bt.costModel?.slippageBps ?? 5),
+      stopLossEnabled: (bt.costModel?.stopLossPercent ?? 0) > 0,
+      stopLoss: String(bt.costModel?.stopLossPercent ?? 5),
       initialCapital: String(bt.initialCapital),
     }
     navigate('/backtest/new', { state })
