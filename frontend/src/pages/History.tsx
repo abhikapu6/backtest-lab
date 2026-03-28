@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button, Card } from '../components/index.js'
 import type { CloneState } from './NewBacktest.js'
 
@@ -113,7 +114,7 @@ export function History() {
               <thead>
                 <tr>
                   {['Run Date', 'Strategy', 'Symbols', 'Date Range', 'Total Return', 'Sharpe', 'Max DD', 'Trades', ''].map((h, col) => (
-                    <th key={`col-${col}`} className="data-table__th">
+                    <th key={`col-${col}`} className="data-table__th" style={col >= 4 ? { textAlign: 'right' } : undefined}>
                       {h}
                     </th>
                   ))}
@@ -126,12 +127,11 @@ export function History() {
                       {Array.from({ length: 9 }).map((__, j) => (
                         <td key={j} className="data-table__td">
                           <div
+                            className="skeleton"
                             style={{
                               height: 14,
                               borderRadius: 6,
-                              background: 'var(--color-bg-surface)',
-                              animation: 'pulse 1.5s ease-in-out infinite',
-                              width: j === 8 ? 80 : '80%',
+                              width: j === 8 ? 80 : ['55%', '70%', '60%', '80%', '45%', '40%', '45%', '40%', 80][j] ?? '80%',
                             }}
                           />
                         </td>
@@ -148,10 +148,18 @@ export function History() {
                     </td>
                   </tr>
                 ) : (
-                  backtests.map((bt) => {
+                  <AnimatePresence mode="wait">
+                  {backtests.map((bt, index) => {
                     const m = bt.metrics
                     return (
-                      <tr key={bt.id} className="data-table__row">
+                      <motion.tr
+                        key={bt.id}
+                        className="data-table__row"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ delay: index * 0.035, duration: 0.2, ease: [0.33, 1, 0.68, 1] }}
+                      >
                         <td className="data-table__td">
                           <span style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>
                             {fmtDate(bt.createdAt)}
@@ -216,9 +224,10 @@ export function History() {
                             </button>
                           </div>
                         </td>
-                      </tr>
+                      </motion.tr>
                     )
-                  })
+                  })}
+                  </AnimatePresence>
                 )}
               </tbody>
             </table>

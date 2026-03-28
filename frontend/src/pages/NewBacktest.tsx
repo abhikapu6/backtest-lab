@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Button, Card, Input, Select, Toggle } from '../components/index.js'
+import { fadeSlideUp, staggerContainer } from '../utils/animations.js'
 
 export interface CloneState {
   symbols: string[]
@@ -214,12 +216,18 @@ export function NewBacktest() {
   const paramCols = selectedStrategy ? Math.min(selectedStrategy.params.length, 3) : 1
 
   return (
-    <div className="page-narrow">
-      <h1 className="page-title page-title--sm" style={{ marginBottom: 'var(--space-8)' }}>
+    <motion.div
+      className="page-narrow"
+      variants={staggerContainer(0.06)}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.h1 variants={fadeSlideUp} className="page-title page-title--sm" style={{ marginBottom: 'var(--space-8)' }}>
         Run Backtest
-      </h1>
+      </motion.h1>
 
       <div className="stack">
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <h2 className="section-label">Asset Universe</h2>
           {(['ETFs', 'Equities'] as const).map((group) => (
@@ -229,15 +237,18 @@ export function NewBacktest() {
                 {SYMBOLS.filter((s) => s.group === group).map(({ ticker, label }) => {
                   const active = form.symbols.includes(ticker)
                   return (
-                    <button
+                    <motion.button
                       key={ticker}
                       type="button"
                       onClick={() => toggleSymbol(ticker)}
                       title={label}
                       className={`chip ${active ? 'chip--active' : ''}`}
+                      whileTap={{ scale: 0.91 }}
+                      whileHover={{ scale: 1.04 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 22 }}
                     >
                       {ticker}
-                    </button>
+                    </motion.button>
                   )
                 })}
               </div>
@@ -245,7 +256,9 @@ export function NewBacktest() {
           ))}
           {errors.symbols && <span className="field-error" style={{ display: 'block', marginTop: 'var(--space-2)' }}>{errors.symbols}</span>}
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <h2 className="section-label">Date Range</h2>
           <div className="grid-2" style={{ marginTop: 'var(--space-4)' }}>
@@ -271,7 +284,9 @@ export function NewBacktest() {
             />
           </div>
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <h2 className="section-label">Strategy</h2>
           <div style={{ marginTop: 'var(--space-4)' }}>
@@ -310,7 +325,9 @@ export function NewBacktest() {
             </>
           )}
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <div className="row-between">
             <h2 className="section-label">Transaction Costs</h2>
@@ -351,7 +368,9 @@ export function NewBacktest() {
             </div>
           )}
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <div className="row-between" style={{ alignItems: 'flex-start' }}>
             <div>
@@ -384,7 +403,9 @@ export function NewBacktest() {
             </div>
           )}
         </Card>
+        </motion.div>
 
+        <motion.div variants={fadeSlideUp}>
         <Card>
           <h2 className="section-label">Initial Capital</h2>
           <div style={{ marginTop: 'var(--space-4)', maxWidth: 260 }}>
@@ -402,13 +423,16 @@ export function NewBacktest() {
             />
           </div>
         </Card>
+        </motion.div>
 
-        {submitError && <div className="alert-error">{submitError}</div>}
+        {submitError && <motion.div variants={fadeSlideUp}><div className="alert-error">{submitError}</div></motion.div>}
 
-        <Button size="lg" loading={submitting} onClick={handleSubmit} style={{ alignSelf: 'flex-start' }}>
-          Run Backtest
-        </Button>
+        <motion.div variants={fadeSlideUp}>
+          <Button size="lg" loading={submitting} onClick={handleSubmit} style={{ alignSelf: 'flex-start' }}>
+            Run Backtest
+          </Button>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   )
 }

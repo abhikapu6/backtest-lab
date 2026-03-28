@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -12,6 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts'
 import { Card, KpiCard, Table } from '../components/index.js'
+import { fadeSlideUp, staggerContainer } from '../utils/animations.js'
 
 const CHART_PRIMARY = '#2f9e44'
 const CHART_DANGER = '#dc2626'
@@ -133,8 +135,13 @@ export function BacktestResults() {
     .map(p => p.date)
 
   return (
-    <div className="page-wide">
-      <header style={{ marginBottom: 'var(--space-8)' }}>
+    <motion.div
+      className="page-wide"
+      variants={staggerContainer(0.07)}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.header variants={fadeSlideUp} style={{ marginBottom: 'var(--space-8)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
           <h1 className="page-title page-title--sm" style={{ margin: 0 }}>{strategyName}</h1>
           <span className="status-badge">{detail.status}</span>
@@ -158,158 +165,188 @@ export function BacktestResults() {
             <IconClock />
           </MetaItem>
         </div>
-      </header>
+      </motion.header>
 
       {m && (
-        <div className="kpi-grid">
+        <motion.div variants={fadeSlideUp} className="kpi-grid">
           <KpiCard
+            index={0}
             label="Total Return"
             value={pct(m.totalReturn)}
+            rawValue={m.totalReturn}
+            formatter={(n) => pct(n)}
             subValue={`vs ${fmtMoney(detail.initialCapital)} initial`}
             trend={m.totalReturn >= 0 ? 'up' : 'down'}
           />
           <KpiCard
+            index={1}
             label="CAGR"
             value={pct(m.cagr)}
+            rawValue={m.cagr}
+            formatter={(n) => pct(n)}
             subValue="Annualised"
             trend={m.cagr >= 0 ? 'up' : 'down'}
           />
           <KpiCard
+            index={2}
             label="Sharpe Ratio"
             value={fmt(m.sharpe)}
+            rawValue={m.sharpe}
+            formatter={(n) => fmt(n)}
             subValue="Risk-free rate = 0"
             trend={m.sharpe >= 1 ? 'up' : m.sharpe >= 0 ? 'neutral' : 'down'}
           />
           <KpiCard
+            index={3}
             label="Volatility"
             value={pct(m.volatility)}
+            rawValue={m.volatility}
+            formatter={(n) => pct(n)}
             subValue="Annualised (252d)"
             trend="neutral"
           />
           <KpiCard
+            index={4}
             label="Max Drawdown"
             value={pct(m.maxDrawdown)}
+            rawValue={m.maxDrawdown}
+            formatter={(n) => pct(n)}
             subValue="Peak-to-trough"
             trend="down"
           />
           <KpiCard
+            index={5}
             label="Win Rate"
             value={pct(m.winRate, 1)}
+            rawValue={m.winRate}
+            formatter={(n) => pct(n, 1)}
             subValue={`${m.numTrades} trades`}
             trend={m.winRate >= 0.5 ? 'up' : 'down'}
           />
           <KpiCard
+            index={6}
             label="Profit Factor"
             value={m.profitFactor >= 999 ? '∞' : fmt(m.profitFactor)}
+            rawValue={m.profitFactor >= 999 ? undefined : m.profitFactor}
+            formatter={m.profitFactor >= 999 ? undefined : (n) => fmt(n)}
             subValue="Gross win / gross loss"
             trend={m.profitFactor >= 1.5 ? 'up' : m.profitFactor >= 1 ? 'neutral' : 'down'}
           />
           <KpiCard
+            index={7}
             label="Total Trades"
             value={String(m.numTrades)}
+            rawValue={m.numTrades}
+            formatter={(n) => String(Math.round(n))}
             subValue="Completed round-trips"
             trend="neutral"
           />
-        </div>
+        </motion.div>
       )}
 
       {equity.length > 0 && (
         <>
-          <Card className="chart-surface" padding="var(--space-5)">
-            <h2 className="chart-title">Equity Curve</h2>
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={CHART_PRIMARY} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={CHART_PRIMARY} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  ticks={equityTicks}
-                  tickFormatter={fmtAxisDate}
-                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={52}
-                />
-                <Tooltip content={<EquityTooltip initialCapital={detail.initialCapital} />} />
-                <Area
-                  type="monotone"
-                  dataKey="equity"
-                  stroke={CHART_PRIMARY}
-                  strokeWidth={2}
-                  fill="url(#equityGrad)"
-                  dot={false}
-                  activeDot={{ r: 4, fill: CHART_PRIMARY }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
+          <motion.div variants={fadeSlideUp}>
+            <Card className="chart-surface" padding="var(--space-5)">
+              <h2 className="chart-title">Equity Curve</h2>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_PRIMARY} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={CHART_PRIMARY} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    ticks={equityTicks}
+                    tickFormatter={fmtAxisDate}
+                    tick={{ fontSize: 11, fill: '#6b8a7a' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                    tick={{ fontSize: 11, fill: '#6b8a7a' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={52}
+                  />
+                  <Tooltip content={<EquityTooltip initialCapital={detail.initialCapital} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="equity"
+                    stroke={CHART_PRIMARY}
+                    strokeWidth={2.5}
+                    fill="url(#equityGrad)"
+                    dot={false}
+                    activeDot={{ r: 5, fill: CHART_PRIMARY, stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+          </motion.div>
 
-          <Card className="chart-surface" padding="var(--space-5)">
-            <h2 className="chart-title">Drawdown</h2>
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={CHART_DANGER} stopOpacity={0.18} />
-                    <stop offset="95%" stopColor={CHART_DANGER} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  ticks={equityTicks}
-                  tickFormatter={fmtAxisDate}
-                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
-                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={44}
-                />
-                <ReferenceLine y={0} stroke="var(--color-border)" strokeWidth={1} />
-                <Tooltip content={<DrawdownTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="drawdown"
-                  stroke={CHART_DANGER}
-                  strokeWidth={1.5}
-                  fill="url(#ddGrad)"
-                  dot={false}
-                  activeDot={{ r: 3, fill: CHART_DANGER }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
+          <motion.div variants={fadeSlideUp}>
+            <Card className="chart-surface" padding="var(--space-5)">
+              <h2 className="chart-title">Drawdown</h2>
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_DANGER} stopOpacity={0.22} />
+                      <stop offset="95%" stopColor={CHART_DANGER} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    ticks={equityTicks}
+                    tickFormatter={fmtAxisDate}
+                    tick={{ fontSize: 11, fill: '#6b8a7a' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                    tick={{ fontSize: 11, fill: '#6b8a7a' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={44}
+                  />
+                  <ReferenceLine y={0} stroke="var(--color-border)" strokeWidth={1} />
+                  <Tooltip content={<DrawdownTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="drawdown"
+                    stroke={CHART_DANGER}
+                    strokeWidth={1.5}
+                    fill="url(#ddGrad)"
+                    dot={false}
+                    activeDot={{ r: 4, fill: CHART_DANGER, stroke: '#fff', strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+          </motion.div>
         </>
       )}
 
-      <Card padding="0">
-        <div style={{ padding: 'var(--space-5) var(--space-5) var(--space-3)' }}>
-          <h2 className="chart-title">Trades ({trades.length})</h2>
-        </div>
-        <Table
-          columns={tradeColumns}
-          data={trades}
-          rowKey={(_, i) => String(i)}
-          emptyMessage="No trades were executed"
-        />
-      </Card>
-    </div>
+      <motion.div variants={fadeSlideUp}>
+        <Card padding="0">
+          <div style={{ padding: 'var(--space-5) var(--space-5) var(--space-3)' }}>
+            <h2 className="chart-title">Trades ({trades.length})</h2>
+          </div>
+          <Table
+            columns={tradeColumns}
+            data={trades}
+            rowKey={(_, i) => String(i)}
+            emptyMessage="No trades were executed"
+          />
+        </Card>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -491,57 +528,15 @@ function IconClock() {
 function LoadingSkeleton() {
   return (
     <div className="page-wide">
-      <div
-        style={{
-          width: 260,
-          height: 36,
-          marginBottom: 'var(--space-3)',
-          background: 'var(--color-bg-surface)',
-          borderRadius: 'var(--radius-md)',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          width: 400,
-          height: 18,
-          marginBottom: 'var(--space-6)',
-          background: 'var(--color-bg-surface)',
-          borderRadius: 'var(--radius-md)',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
+      <div className="skeleton" style={{ width: 260, height: 36, marginBottom: 'var(--space-3)', borderRadius: 'var(--radius-md)' }} />
+      <div className="skeleton" style={{ width: 400, height: 18, marginBottom: 'var(--space-6)', borderRadius: 'var(--radius-md)' }} />
       <div className="kpi-grid">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              height: 96,
-              borderRadius: 'var(--radius-xl)',
-              background: 'var(--color-bg-surface)',
-              animation: 'pulse 1.5s ease-in-out infinite',
-            }}
-          />
+          <div key={i} className="skeleton" style={{ height: 110, borderRadius: 'var(--radius-xl)' }} />
         ))}
       </div>
-      <div
-        style={{
-          height: 290,
-          borderRadius: 'var(--radius-xl)',
-          marginBottom: 'var(--space-6)',
-          marginTop: 'var(--space-6)',
-          background: 'var(--color-bg-surface)',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          height: 180,
-          borderRadius: 'var(--radius-xl)',
-          background: 'var(--color-bg-surface)',
-          animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-      />
+      <div className="skeleton" style={{ height: 290, borderRadius: 'var(--radius-xl)', marginBottom: 'var(--space-6)', marginTop: 'var(--space-6)' }} />
+      <div className="skeleton" style={{ height: 180, borderRadius: 'var(--radius-xl)' }} />
     </div>
   )
 }

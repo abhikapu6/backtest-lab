@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -32,14 +33,34 @@ export function Button({
   style,
   type = 'button',
   children,
+  onPointerDown,
   ...props
 }: ButtonProps) {
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  function handlePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+    onPointerDown?.(e)
+    const btn = btnRef.current
+    if (!btn || disabled || loading) return
+    const rect = btn.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const span = document.createElement('span')
+    span.className = 'btn__ripple'
+    span.style.left = `${x}px`
+    span.style.top = `${y}px`
+    btn.appendChild(span)
+    span.addEventListener('animationend', () => span.remove())
+  }
+
   return (
     <button
+      ref={btnRef}
       type={type}
       disabled={disabled || loading}
       className={`${variantClass[variant]} ${sizeClass[size]} ${className}`.trim()}
       style={style}
+      onPointerDown={handlePointerDown}
       {...props}
     >
       {loading && <Spinner />}
