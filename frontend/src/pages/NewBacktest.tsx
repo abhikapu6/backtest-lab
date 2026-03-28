@@ -91,7 +91,6 @@ export function NewBacktest() {
       .then((data) => {
         const list: StrategyInfo[] = data.strategies
         setStrategies(list)
-        // Only seed defaults when NOT cloning (cloned state already has strategyId + params)
         if (!cloned && list.length > 0) {
           const first = list[0]
           setForm((f) => ({
@@ -212,19 +211,22 @@ export function NewBacktest() {
     }
   }
 
-  return (
-    <div style={{ maxWidth: 720 }}>
-      <h1 style={h1Style}>Run Backtest</h1>
+  const paramCols = selectedStrategy ? Math.min(selectedStrategy.params.length, 3) : 1
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-        {/* ── Symbols ──────────────────────────────────────────── */}
+  return (
+    <div className="page-narrow">
+      <h1 className="page-title page-title--sm" style={{ marginBottom: 'var(--space-8)' }}>
+        Run Backtest
+      </h1>
+
+      <div className="stack">
         <Card>
-          <SectionLabel>Asset Universe</SectionLabel>
+          <h2 className="section-label">Asset Universe</h2>
           {(['ETFs', 'Equities'] as const).map((group) => (
-            <div key={group} style={{ marginTop: 'var(--space-3)' }}>
-              <p style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{group}</p>
+            <div key={group} style={{ marginTop: 'var(--space-4)' }}>
+              <p className="section-group-title">{group}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-                {SYMBOLS.filter(s => s.group === group).map(({ ticker, label }) => {
+                {SYMBOLS.filter((s) => s.group === group).map(({ ticker, label }) => {
                   const active = form.symbols.includes(ticker)
                   return (
                     <button
@@ -232,19 +234,7 @@ export function NewBacktest() {
                       type="button"
                       onClick={() => toggleSymbol(ticker)}
                       title={label}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 'var(--radius-md)',
-                        border: `1.5px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                        background: active ? 'var(--color-primary-ghost)' : 'var(--color-bg-surface)',
-                        color: active ? 'var(--color-primary)' : 'var(--color-text-muted)',
-                        fontWeight: active ? 600 : 400,
-                        fontSize: 'var(--text-sm)',
-                        fontFamily: 'var(--font-mono)',
-                        cursor: 'pointer',
-                        transition: 'all var(--transition-fast)',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className={`chip ${active ? 'chip--active' : ''}`}
                     >
                       {ticker}
                     </button>
@@ -253,13 +243,12 @@ export function NewBacktest() {
               </div>
             </div>
           ))}
-          {errors.symbols && <ErrorHint>{errors.symbols}</ErrorHint>}
+          {errors.symbols && <span className="field-error" style={{ display: 'block', marginTop: 'var(--space-2)' }}>{errors.symbols}</span>}
         </Card>
 
-        {/* ── Date Range ───────────────────────────────────────── */}
         <Card>
-          <SectionLabel>Date Range</SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginTop: 'var(--space-3)' }}>
+          <h2 className="section-label">Date Range</h2>
+          <div className="grid-2" style={{ marginTop: 'var(--space-4)' }}>
             <Input
               label="Start Date"
               type="date"
@@ -283,10 +272,9 @@ export function NewBacktest() {
           </div>
         </Card>
 
-        {/* ── Strategy ─────────────────────────────────────────── */}
         <Card>
-          <SectionLabel>Strategy</SectionLabel>
-          <div style={{ marginTop: 'var(--space-3)' }}>
+          <h2 className="section-label">Strategy</h2>
+          <div style={{ marginTop: 'var(--space-4)' }}>
             <Select
               label="Strategy"
               options={strategies.map((s) => ({ value: s.id, label: s.name }))}
@@ -298,24 +286,12 @@ export function NewBacktest() {
 
           {selectedStrategy && (
             <>
-              <p style={{
-                margin: 'var(--space-3) 0',
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text-muted)',
-                lineHeight: 1.5,
-                background: 'var(--color-bg-surface)',
-                padding: 'var(--space-3)',
-                borderRadius: 'var(--radius-md)',
-                borderLeft: '3px solid var(--color-primary)',
-              }}>
-                {selectedStrategy.description}
-              </p>
+              <p className="strategy-callout">{selectedStrategy.description}</p>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${Math.min(selectedStrategy.params.length, 3)}, 1fr)`,
-                gap: 'var(--space-4)',
-              }}>
+              <div
+                className="param-grid"
+                style={{ gridTemplateColumns: `repeat(${paramCols}, 1fr)` }}
+              >
                 {selectedStrategy.params.map((pd) => (
                   <Input
                     key={pd.name}
@@ -335,10 +311,9 @@ export function NewBacktest() {
           )}
         </Card>
 
-        {/* ── Cost Model ───────────────────────────────────────── */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <SectionLabel>Transaction Costs</SectionLabel>
+          <div className="row-between">
+            <h2 className="section-label">Transaction Costs</h2>
             <Toggle
               checked={form.costEnabled}
               onChange={(v) => setForm((f) => ({ ...f, costEnabled: v }))}
@@ -346,7 +321,7 @@ export function NewBacktest() {
           </div>
 
           {form.costEnabled && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
+            <div className="grid-2" style={{ marginTop: 'var(--space-4)' }}>
               <Input
                 label="Commission per Trade ($)"
                 type="number"
@@ -377,12 +352,11 @@ export function NewBacktest() {
           )}
         </Card>
 
-        {/* ── Stop-Loss ────────────────────────────────────────── */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="row-between" style={{ alignItems: 'flex-start' }}>
             <div>
-              <SectionLabel>Stop-Loss</SectionLabel>
-              <p style={{ margin: 'var(--space-1) 0 0', fontSize: 'var(--text-xs)', color: 'var(--color-text-dim)' }}>
+              <h2 className="section-label">Stop-Loss</h2>
+              <p style={{ margin: 'var(--space-2) 0 0', fontSize: 'var(--text-xs)', color: 'var(--color-text-dim)', maxWidth: '18rem' }}>
                 Exit a position intrabar when price drops this % below entry
               </p>
             </div>
@@ -393,7 +367,7 @@ export function NewBacktest() {
           </div>
 
           {form.stopLossEnabled && (
-            <div style={{ marginTop: 'var(--space-4)', maxWidth: 200 }}>
+            <div style={{ marginTop: 'var(--space-4)', maxWidth: 220 }}>
               <Input
                 label="Stop-Loss (%)"
                 type="number"
@@ -411,10 +385,9 @@ export function NewBacktest() {
           )}
         </Card>
 
-        {/* ── Capital ──────────────────────────────────────────── */}
         <Card>
-          <SectionLabel>Initial Capital</SectionLabel>
-          <div style={{ marginTop: 'var(--space-3)', maxWidth: 240 }}>
+          <h2 className="section-label">Initial Capital</h2>
+          <div style={{ marginTop: 'var(--space-4)', maxWidth: 260 }}>
             <Input
               label="Amount ($)"
               type="number"
@@ -430,58 +403,12 @@ export function NewBacktest() {
           </div>
         </Card>
 
-        {/* ── Submit ───────────────────────────────────────────── */}
-        {submitError && (
-          <div style={{
-            padding: 'var(--space-3) var(--space-4)',
-            background: 'var(--color-danger-dim)',
-            border: '1px solid var(--color-danger)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--color-danger)',
-            fontSize: 'var(--text-sm)',
-          }}>
-            {submitError}
-          </div>
-        )}
+        {submitError && <div className="alert-error">{submitError}</div>}
 
-        <Button
-          size="lg"
-          loading={submitting}
-          onClick={handleSubmit}
-          style={{ alignSelf: 'flex-start' }}
-        >
+        <Button size="lg" loading={submitting} onClick={handleSubmit} style={{ alignSelf: 'flex-start' }}>
           Run Backtest
         </Button>
       </div>
     </div>
   )
-}
-
-/* ── Shared small components ─────────────────────────────────────── */
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 style={{
-      fontSize: 'var(--text-base)',
-      fontWeight: 600,
-      color: 'var(--color-text)',
-      margin: 0,
-    }}>
-      {children}
-    </h2>
-  )
-}
-
-function ErrorHint({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)', marginTop: 'var(--space-1)', display: 'block' }}>
-      {children}
-    </span>
-  )
-}
-
-const h1Style: React.CSSProperties = {
-  fontSize: 'var(--text-2xl)',
-  fontWeight: 700,
-  marginBottom: 'var(--space-6)',
 }

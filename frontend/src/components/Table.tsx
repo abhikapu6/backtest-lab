@@ -16,41 +16,17 @@ interface TableProps<T> {
   style?: CSSProperties
 }
 
-const cellBase: CSSProperties = {
-  padding: '10px 16px',
-  fontSize: 'var(--text-sm)',
-  borderBottom: '1px solid var(--color-border)',
-  whiteSpace: 'nowrap',
-}
-
 export function Table<T>({ columns, data, rowKey, emptyMessage = 'No data', style }: TableProps<T>) {
   return (
-    <div style={{ overflowX: 'auto', ...style }}>
-      <table
-        style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          fontFamily: 'var(--font-sans)',
-        }}
-      >
+    <div className="table-wrap" style={style}>
+      <table className="data-table">
         <thead>
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
-                style={{
-                  ...cellBase,
-                  textAlign: col.align || 'left',
-                  fontWeight: 600,
-                  fontSize: 'var(--text-xs)',
-                  color: 'var(--color-text-muted)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  width: col.width,
-                  background: 'var(--color-bg-surface)',
-                  position: 'sticky',
-                  top: 0,
-                }}
+                className="data-table__th"
+                style={{ textAlign: col.align || 'left', width: col.width }}
               >
                 {col.header}
               </th>
@@ -60,34 +36,18 @@ export function Table<T>({ columns, data, rowKey, emptyMessage = 'No data', styl
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length}
-                style={{
-                  ...cellBase,
-                  textAlign: 'center',
-                  color: 'var(--color-text-dim)',
-                  padding: 'var(--space-10) var(--space-4)',
-                }}
-              >
+              <td colSpan={columns.length} className="data-table__empty">
                 {emptyMessage}
               </td>
             </tr>
           ) : (
             data.map((row, i) => (
-              <tr
-                key={rowKey(row, i)}
-                style={{ transition: 'background var(--transition-fast)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
+              <tr key={rowKey(row, i)} className="data-table__row">
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    style={{
-                      ...cellBase,
-                      textAlign: col.align || 'left',
-                      color: 'var(--color-text)',
-                    }}
+                    className="data-table__td"
+                    style={{ textAlign: col.align || 'left' }}
                   >
                     {col.render
                       ? col.render(row)

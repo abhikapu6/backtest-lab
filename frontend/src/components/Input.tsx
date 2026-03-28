@@ -5,53 +5,25 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function Input({ label, error, id, style, ...props }: InputProps) {
+export function Input({ label, error, id, className = '', style, ...props }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+  const err = Boolean(error)
+  const controlClass = `input-control ${err ? 'input-control--error' : ''} ${className}`.trim()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+    <div className="field">
       {label && (
-        <label
-          htmlFor={inputId}
-          style={{
-            fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-            color: 'var(--color-text-muted)',
-          }}
-        >
+        <label htmlFor={inputId} className="field-label">
           {label}
         </label>
       )}
       <input
         id={inputId}
-        style={{
-          padding: '8px 12px',
-          fontSize: 'var(--text-base)',
-          fontFamily: 'var(--font-sans)',
-          color: 'var(--color-text)',
-          background: 'var(--color-bg-surface)',
-          border: `1px solid ${error ? 'var(--color-danger)' : 'var(--color-border)'}`,
-          borderRadius: 'var(--radius-md)',
-          outline: 'none',
-          transition: 'border-color var(--transition-fast)',
-          width: '100%',
-          ...style,
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = error ? 'var(--color-danger)' : 'var(--color-border-focus)'
-          props.onFocus?.(e)
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = error ? 'var(--color-danger)' : 'var(--color-border)'
-          props.onBlur?.(e)
-        }}
+        className={controlClass}
+        style={style}
         {...props}
       />
-      {error && (
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)' }}>
-          {error}
-        </span>
-      )}
+      {error && <span className="field-error">{error}</span>}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -12,7 +13,8 @@ import {
 } from 'recharts'
 import { Card, KpiCard, Table } from '../components/index.js'
 
-// ── API types ────────────────────────────────────────────────────────
+const CHART_PRIMARY = '#2f9e44'
+const CHART_DANGER = '#dc2626'
 
 interface BacktestDetail {
   id: string
@@ -53,8 +55,6 @@ interface Trade {
   returnPct: number
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
 const STRATEGY_NAMES: Record<string, string> = {
   'sma-crossover':      'SMA Crossover',
   'ema-crossover':      'EMA Crossover',
@@ -89,8 +89,6 @@ function fmtAxisDate(iso: string) {
 function fmtTooltipDate(iso: string) {
   return fmtDate(iso)
 }
-
-// ── Main component ───────────────────────────────────────────────────
 
 type LoadState = 'loading' | 'error' | 'not-found' | 'done'
 
@@ -130,40 +128,44 @@ export function BacktestResults() {
   const m = detail.metrics
   const strategyName = STRATEGY_NAMES[detail.strategy] ?? detail.strategy
 
-  // Tick thinning for x-axis
   const tickInterval = Math.max(1, Math.floor(equity.length / 8))
   const equityTicks = equity.filter((_, i) => i % tickInterval === 0 || i === equity.length - 1)
     .map(p => p.date)
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div style={{ marginBottom: 'var(--space-6)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, margin: 0 }}>
-            {strategyName}
-          </h1>
-          <span style={statusBadgeStyle}>{detail.status}</span>
+    <div className="page-wide">
+      <header style={{ marginBottom: 'var(--space-8)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap', marginBottom: 'var(--space-2)' }}>
+          <h1 className="page-title page-title--sm" style={{ margin: 0 }}>{strategyName}</h1>
+          <span className="status-badge">{detail.status}</span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-          <MetaItem icon="📊" label={detail.symbols.join(', ')} />
-          <MetaItem icon="📅" label={`${fmtDate(detail.startDate)} → ${fmtDate(detail.endDate)}`} />
-          <MetaItem icon="💰" label={`${fmtMoney(detail.initialCapital)} initial capital`} />
+        <div className="meta-row">
+          <MetaItem label={detail.symbols.join(', ')}>
+            <IconChartBar />
+          </MetaItem>
+          <MetaItem label={`${fmtDate(detail.startDate)} → ${fmtDate(detail.endDate)}`}>
+            <IconCalendar />
+          </MetaItem>
+          <MetaItem label={`${fmtMoney(detail.initialCapital)} initial capital`}>
+            <IconWallet />
+          </MetaItem>
           {detail.costModel.enabled && (
-            <MetaItem icon="⚙️" label={`$${detail.costModel.commissionPerTrade} commission · ${detail.costModel.slippageBps} bps slippage`} />
+            <MetaItem label={`$${detail.costModel.commissionPerTrade} commission · ${detail.costModel.slippageBps} bps slippage`}>
+              <IconSliders />
+            </MetaItem>
           )}
-          <MetaItem icon="🕐" label={`Run ${fmtDate(detail.createdAt)}`} />
+          <MetaItem label={`Run ${fmtDate(detail.createdAt)}`}>
+            <IconClock />
+          </MetaItem>
         </div>
-      </div>
+      </header>
 
-      {/* ── KPI grid ─────────────────────────────────────────── */}
       {m && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+        <div className="kpi-grid">
           <KpiCard
             label="Total Return"
             value={pct(m.totalReturn)}
-            subValue={`vs $${fmtMoney(detail.initialCapital)} initial`}
+            subValue={`vs ${fmtMoney(detail.initialCapital)} initial`}
             trend={m.totalReturn >= 0 ? 'up' : 'down'}
           />
           <KpiCard
@@ -211,17 +213,16 @@ export function BacktestResults() {
         </div>
       )}
 
-      {/* ── Charts ───────────────────────────────────────────── */}
       {equity.length > 0 && (
         <>
-          <Card style={{ marginBottom: 'var(--space-6)' }} padding="var(--space-5)">
-            <ChartTitle>Equity Curve</ChartTitle>
+          <Card className="chart-surface" padding="var(--space-5)">
+            <h2 className="chart-title">Equity Curve</h2>
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="equityGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2f9e44" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#2f9e44" stopOpacity={0} />
+                    <stop offset="5%" stopColor={CHART_PRIMARY} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={CHART_PRIMARY} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -229,41 +230,39 @@ export function BacktestResults() {
                   dataKey="date"
                   ticks={equityTicks}
                   tickFormatter={fmtAxisDate}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-dim)' }}
+                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-dim)' }}
+                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
                   axisLine={false}
                   tickLine={false}
                   width={52}
                 />
-                <Tooltip
-                  content={<EquityTooltip initialCapital={detail.initialCapital} />}
-                />
+                <Tooltip content={<EquityTooltip initialCapital={detail.initialCapital} />} />
                 <Area
                   type="monotone"
                   dataKey="equity"
-                  stroke="#2f9e44"
+                  stroke={CHART_PRIMARY}
                   strokeWidth={2}
                   fill="url(#equityGrad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: '#2f9e44' }}
+                  activeDot={{ r: 4, fill: CHART_PRIMARY }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </Card>
 
-          <Card style={{ marginBottom: 'var(--space-6)' }} padding="var(--space-5)">
-            <ChartTitle>Drawdown</ChartTitle>
+          <Card className="chart-surface" padding="var(--space-5)">
+            <h2 className="chart-title">Drawdown</h2>
             <ResponsiveContainer width="100%" height={160}>
               <AreaChart data={equity} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="ddGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#dc2626" stopOpacity={0.18} />
-                    <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                    <stop offset="5%" stopColor={CHART_DANGER} stopOpacity={0.18} />
+                    <stop offset="95%" stopColor={CHART_DANGER} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -271,29 +270,27 @@ export function BacktestResults() {
                   dataKey="date"
                   ticks={equityTicks}
                   tickFormatter={fmtAxisDate}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-dim)' }}
+                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
-                  tick={{ fontSize: 11, fill: 'var(--color-text-dim)' }}
+                  tick={{ fontSize: 11, fill: '#6b8a7a' }}
                   axisLine={false}
                   tickLine={false}
                   width={44}
                 />
                 <ReferenceLine y={0} stroke="var(--color-border)" strokeWidth={1} />
-                <Tooltip
-                  content={<DrawdownTooltip />}
-                />
+                <Tooltip content={<DrawdownTooltip />} />
                 <Area
                   type="monotone"
                   dataKey="drawdown"
-                  stroke="#dc2626"
+                  stroke={CHART_DANGER}
                   strokeWidth={1.5}
                   fill="url(#ddGrad)"
                   dot={false}
-                  activeDot={{ r: 3, fill: '#dc2626' }}
+                  activeDot={{ r: 3, fill: CHART_DANGER }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -301,10 +298,9 @@ export function BacktestResults() {
         </>
       )}
 
-      {/* ── Trades table ─────────────────────────────────────── */}
       <Card padding="0">
         <div style={{ padding: 'var(--space-5) var(--space-5) var(--space-3)' }}>
-          <ChartTitle>Trades ({trades.length})</ChartTitle>
+          <h2 className="chart-title">Trades ({trades.length})</h2>
         </div>
         <Table
           columns={tradeColumns}
@@ -313,12 +309,9 @@ export function BacktestResults() {
           emptyMessage="No trades were executed"
         />
       </Card>
-
     </div>
   )
 }
-
-// ── Trade columns ────────────────────────────────────────────────────
 
 const tradeColumns = [
   {
@@ -362,12 +355,15 @@ const tradeColumns = [
     header: 'PnL',
     align: 'right' as const,
     render: (t: Trade) => (
-      <span style={{
-        fontFamily: 'var(--font-mono)',
-        fontWeight: 600,
-        color: t.pnl >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
-      }}>
-        {t.pnl >= 0 ? '+' : ''}{fmtMoney(t.pnl)}
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 600,
+          color: t.pnl >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
+        }}
+      >
+        {t.pnl >= 0 ? '+' : ''}
+        {fmtMoney(t.pnl)}
       </span>
     ),
   },
@@ -376,19 +372,23 @@ const tradeColumns = [
     header: 'Return',
     align: 'right' as const,
     render: (t: Trade) => (
-      <span style={{
-        fontFamily: 'var(--font-mono)',
-        color: t.returnPct >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
-      }}>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          color: t.returnPct >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
+        }}
+      >
         {pct(t.returnPct)}
       </span>
     ),
   },
 ]
 
-// ── Custom tooltips ──────────────────────────────────────────────────
-
-function EquityTooltip({ active, payload, initialCapital }: {
+function EquityTooltip({
+  active,
+  payload,
+  initialCapital,
+}: {
   active?: boolean
   payload?: Array<{ payload: EquityPoint }>
   initialCapital: number
@@ -397,13 +397,11 @@ function EquityTooltip({ active, payload, initialCapital }: {
   const p = payload[0].payload
   const ret = initialCapital > 0 ? (p.equity - initialCapital) / initialCapital : 0
   return (
-    <div style={tooltipStyle}>
+    <div className="chart-tooltip">
       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 4 }}>
         {fmtTooltipDate(p.date)}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-        {fmtMoney(p.equity)}
-      </div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{fmtMoney(p.equity)}</div>
       <div style={{ fontSize: 'var(--text-xs)', color: ret >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
         {pct(ret)} total return
       </div>
@@ -411,14 +409,11 @@ function EquityTooltip({ active, payload, initialCapital }: {
   )
 }
 
-function DrawdownTooltip({ active, payload }: {
-  active?: boolean
-  payload?: Array<{ payload: EquityPoint }>
-}) {
+function DrawdownTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: EquityPoint }> }) {
   if (!active || !payload?.length) return null
   const p = payload[0].payload
   return (
-    <div style={tooltipStyle}>
+    <div className="chart-tooltip">
       <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: 4 }}>
         {fmtTooltipDate(p.date)}
       </div>
@@ -429,66 +424,143 @@ function DrawdownTooltip({ active, payload }: {
   )
 }
 
-// ── Small UI helpers ─────────────────────────────────────────────────
-
-function MetaItem({ icon, label }: { icon: string; label: string }) {
+function MetaItem({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-      <span>{icon}</span>
+    <span className="meta-item">
+      <span style={{ display: 'flex', color: 'var(--color-primary)' }}>{children}</span>
       {label}
     </span>
   )
 }
 
-function ChartTitle({ children }: { children: React.ReactNode }) {
+function IconChartBar() {
   return (
-    <h2 style={{
-      fontSize: 'var(--text-base)',
-      fontWeight: 600,
-      color: 'var(--color-text)',
-      margin: '0 0 var(--space-4)',
-    }}>
-      {children}
-    </h2>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 3v18h18" />
+      <path d="M7 16l4-8 4 4 6-10" />
+    </svg>
   )
 }
 
-// ── States ───────────────────────────────────────────────────────────
+function IconCalendar() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+
+function IconWallet() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+      <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+      <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+    </svg>
+  )
+}
+
+function IconSliders() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  )
+}
+
+function IconClock() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
 
 function LoadingSkeleton() {
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <div style={{ ...skeletonBase, width: 240, height: 32, marginBottom: 'var(--space-3)' }} />
-      <div style={{ ...skeletonBase, width: 420, height: 18, marginBottom: 'var(--space-6)' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+    <div className="page-wide">
+      <div
+        style={{
+          width: 260,
+          height: 36,
+          marginBottom: 'var(--space-3)',
+          background: 'var(--color-bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }}
+      />
+      <div
+        style={{
+          width: 400,
+          height: 18,
+          marginBottom: 'var(--space-6)',
+          background: 'var(--color-bg-surface)',
+          borderRadius: 'var(--radius-md)',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }}
+      />
+      <div className="kpi-grid">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} style={{ ...skeletonBase, height: 88, borderRadius: 'var(--radius-lg)' }} />
+          <div
+            key={i}
+            style={{
+              height: 96,
+              borderRadius: 'var(--radius-xl)',
+              background: 'var(--color-bg-surface)',
+              animation: 'pulse 1.5s ease-in-out infinite',
+            }}
+          />
         ))}
       </div>
-      <div style={{ ...skeletonBase, height: 290, borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-6)' }} />
-      <div style={{ ...skeletonBase, height: 180, borderRadius: 'var(--radius-lg)' }} />
+      <div
+        style={{
+          height: 290,
+          borderRadius: 'var(--radius-xl)',
+          marginBottom: 'var(--space-6)',
+          marginTop: 'var(--space-6)',
+          background: 'var(--color-bg-surface)',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }}
+      />
+      <div
+        style={{
+          height: 180,
+          borderRadius: 'var(--radius-xl)',
+          background: 'var(--color-bg-surface)',
+          animation: 'pulse 1.5s ease-in-out infinite',
+        }}
+      />
     </div>
   )
 }
 
 function NotFound({ id }: { id?: string }) {
   return (
-    <div style={centeredState}>
-      <span style={{ fontSize: 40 }}>🔍</span>
-      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, margin: 'var(--space-3) 0 var(--space-2)' }}>
-        Backtest not found
-      </h2>
-      <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-5)' }}>
+    <div className="empty-state">
+      <div className="empty-state__icon" aria-hidden>
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+          <path d="M11 8v4M11 16h.01" />
+        </svg>
+      </div>
+      <h2 className="empty-state__title">Backtest not found</h2>
+      <p className="empty-state__text">
         No backtest with ID <code>{id}</code> exists.
       </p>
-      <Link to="/backtest/new" style={{
-        padding: '8px 18px',
-        background: 'var(--color-primary)',
-        color: '#fff',
-        borderRadius: 'var(--radius-md)',
-        fontWeight: 500,
-        fontSize: 'var(--text-sm)',
-      }}>
+      <Link to="/backtest/new" className="link-pill">
         Run a new backtest
       </Link>
     </div>
@@ -497,53 +569,18 @@ function NotFound({ id }: { id?: string }) {
 
 function ErrorState() {
   return (
-    <div style={centeredState}>
-      <span style={{ fontSize: 40 }}>⚠️</span>
-      <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, margin: 'var(--space-3) 0 var(--space-2)' }}>
-        Failed to load results
-      </h2>
-      <p style={{ color: 'var(--color-text-muted)' }}>
+    <div className="empty-state">
+      <div className="empty-state__icon" style={{ color: 'var(--color-warning)' }} aria-hidden>
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </div>
+      <h2 className="empty-state__title">Failed to load results</h2>
+      <p className="empty-state__text" style={{ marginBottom: 0 }}>
         Check your connection or try again.
       </p>
     </div>
   )
-}
-
-// ── Style constants ──────────────────────────────────────────────────
-
-const tooltipStyle: React.CSSProperties = {
-  background: 'var(--color-bg-raised)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-md)',
-  padding: '8px 12px',
-  fontSize: 'var(--text-sm)',
-  boxShadow: 'var(--shadow-md)',
-  color: 'var(--color-text)',
-  minWidth: 120,
-}
-
-const statusBadgeStyle: React.CSSProperties = {
-  padding: '2px 10px',
-  borderRadius: 999,
-  background: 'var(--color-success-dim)',
-  color: 'var(--color-success)',
-  fontSize: 'var(--text-xs)',
-  fontWeight: 600,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
-}
-
-const skeletonBase: React.CSSProperties = {
-  background: 'var(--color-bg-surface)',
-  borderRadius: 'var(--radius-md)',
-  animation: 'pulse 1.5s ease-in-out infinite',
-}
-
-const centeredState: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: 320,
-  textAlign: 'center',
 }

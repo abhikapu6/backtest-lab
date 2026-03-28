@@ -12,41 +12,31 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string
 }
 
-export function Select({ label, options, placeholder, error, id, style, ...props }: SelectProps) {
+const CHEVRON =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%236b8a7a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+
+export function Select({ label, options, placeholder, error, id, className = '', style, ...props }: SelectProps) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-')
+  const err = Boolean(error)
+  const controlClass = `select-control ${err ? 'select-control--error' : ''} ${className}`.trim()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+    <div className="field">
       {label && (
-        <label
-          htmlFor={selectId}
-          style={{
-            fontSize: 'var(--text-sm)',
-            fontWeight: 500,
-            color: 'var(--color-text-muted)',
-          }}
-        >
+        <label htmlFor={selectId} className="field-label">
           {label}
         </label>
       )}
       <select
         id={selectId}
+        className={controlClass}
         style={{
-          padding: '8px 12px',
-          fontSize: 'var(--text-base)',
-          fontFamily: 'var(--font-sans)',
-          color: 'var(--color-text)',
-          background: 'var(--color-bg-surface)',
-          border: `1px solid ${error ? 'var(--color-danger)' : 'var(--color-border)'}`,
-          borderRadius: 'var(--radius-md)',
-          outline: 'none',
           cursor: 'pointer',
-          width: '100%',
           appearance: 'none',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%238b8fa3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+          backgroundImage: `url("${CHEVRON}")`,
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right 12px center',
-          paddingRight: '32px',
+          paddingRight: '2rem',
           ...style,
         }}
         {...props}
@@ -62,11 +52,7 @@ export function Select({ label, options, placeholder, error, id, style, ...props
           </option>
         ))}
       </select>
-      {error && (
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-danger)' }}>
-          {error}
-        </span>
-      )}
+      {error && <span className="field-error">{error}</span>}
     </div>
   )
 }

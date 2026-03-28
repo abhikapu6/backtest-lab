@@ -5,16 +5,21 @@ interface CardProps {
   padding?: string
   style?: CSSProperties
   className?: string
+  variant?: 'default' | 'ghost' | 'inset'
 }
 
-export function Card({ children, padding = 'var(--space-6)', style, className }: CardProps) {
+export function Card({ children, padding = 'var(--space-6)', style, className = '', variant = 'default' }: CardProps) {
+  const surfaceClass =
+    variant === 'ghost'
+      ? 'surface'
+      : variant === 'inset'
+        ? 'surface surface--inset'
+        : 'surface surface--elevated'
+
   return (
     <div
-      className={className}
+      className={`${surfaceClass} ${className}`.trim()}
       style={{
-        background: 'var(--color-bg-raised)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-lg)',
         padding,
         ...style,
       }}

@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import type { ErrorInfo, ReactNode } from 'react'
+import { Button } from './Button.js'
 
 interface Props {
   children: ReactNode
@@ -27,64 +28,25 @@ export class ErrorBoundary extends Component<Props, State> {
   override render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 320,
-          textAlign: 'center',
-          padding: 'var(--space-8)',
-        }}>
-          <span style={{ fontSize: 40, marginBottom: 'var(--space-4)' }}>💥</span>
-          <h2 style={{
-            fontSize: 'var(--text-xl)',
-            fontWeight: 600,
-            color: 'var(--color-text)',
-            marginBottom: 'var(--space-2)',
-          }}>
-            Something went wrong
-          </h2>
-          <p style={{
-            fontSize: 'var(--text-sm)',
-            color: 'var(--color-text-muted)',
-            marginBottom: 'var(--space-5)',
-            maxWidth: 420,
-          }}>
+        <div className="empty-state error-boundary">
+          <div className="error-boundary__icon" aria-hidden>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+          </div>
+          <h2 className="empty-state__title">Something went wrong</h2>
+          <p className="empty-state__text">
             An unexpected error occurred in this part of the app.
           </p>
           {this.state.error && (
-            <pre style={{
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-danger)',
-              background: 'var(--color-danger-dim)',
-              border: '1px solid var(--color-danger)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-3) var(--space-4)',
-              maxWidth: 560,
-              overflowX: 'auto',
-              textAlign: 'left',
-              marginBottom: 'var(--space-5)',
-            }}>
+            <pre className="error-boundary__trace">
               {this.state.error.message}
             </pre>
           )}
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{
-              padding: '8px 18px',
-              background: 'var(--color-primary)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 500,
-              fontSize: 'var(--text-sm)',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
+          <Button variant="primary" onClick={() => this.setState({ hasError: false, error: null })}>
             Try again
-          </button>
+          </Button>
         </div>
       )
     }
